@@ -1,0 +1,191 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap');
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+@import "leaflet.markercluster/dist/MarkerCluster.css";
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.incident-marker-icon {
+  background: transparent;
+  border: none;
+}
+
+/* Hide scrollbars while keeping scroll (used by filter rows & carousel) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Slow continuous spin for the compass indicator */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* Clean, light-styled Leaflet zoom controls to match the CARTO look */
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12) !important;
+  border-radius: 0.75rem !important;
+  overflow: hidden;
+}
+.leaflet-control-zoom a {
+  width: 34px !important;
+  height: 34px !important;
+  line-height: 34px !important;
+  color: #334155 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: none !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+}
+.leaflet-control-zoom a:first-child {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+.leaflet-control-zoom a:hover {
+  background: #f1f5f9 !important;
+  color: var(--color-primary) !important;
+}
+
+/* Keep map controls clear of the floating glass pill bar at the top. */
+.leaflet-top {
+  top: 6.75rem;
+}
+
+@theme {
+  --color-primary: #000000;
+  --color-primary-container: #171717;
+  --color-on-primary-container: #FFFFFF;
+  --color-secondary: #53606c;
+  --color-on-secondary-container: #596672;
+  --color-background: #F5F5F5;
+  --color-surface-bg: #FFFFFF;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-critical: #EF4444;
+  --color-outline-variant: #e5e5e5;
+  --color-text-secondary: #737373;
+  
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  
+  --radius-xs: 0.25rem; /* 4px */
+  --radius-sm: 0.5rem; /* 8px */
+  --radius-md: 0.75rem; /* 12px */
+  --radius-lg: 1rem; /* 16px */
+  --radius-xl: 1.5rem; /* 24px */
+  --radius-2xl: 2rem; /* 32px - bento */
+  --radius-3xl: 2.5rem; /* 40px - bento large */
+}
+
+/* Base resets & helper styles */
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: #171717;
+  overscroll-behavior: contain;
+}
+
+/* Custom scrollbars for great UX */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #c3c6d6;
+  border-radius: 9999px;
+}
+
+/* ============================================================
+   Glassmorphism + Bento design language (jun 2026)
+   ============================================================ */
+
+/* Frosted glass surface (light). Use over photos, maps or the app bg. */
+.glass-surface {
+  background: rgba(255, 255, 255, 0.66);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.1);
+}
+
+/* Lighter, more opaque variant for dense content (lists/cards). */
+.glass-card {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 10px 34px rgba(15, 23, 42, 0.08);
+}
+
+/* Dark glass for toasts / contrast surfaces. */
+.glass-surface-dark {
+  background: rgba(10, 10, 10, 0.58);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.3);
+}
+
+/* Graceful fallback where backdrop-filter is unsupported. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-surface,
+  .glass-card { background: rgba(255, 255, 255, 0.95); }
+  .glass-surface-dark { background: rgba(10, 10, 10, 0.92); }
+}
+
+/* Bento radii */
+.bento-card { border-radius: var(--radius-2xl); }
+.bento-card-lg { border-radius: var(--radius-3xl); }
+
+/* Zone Monitoring indicator tiles — rounded shadow (no square glass halo) */
+.indicator-tile {
+  border-radius: var(--radius-2xl);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
+}
+
+/* ============================================================
+   Leaflet marker clusters (referencia imagen2)
+   ============================================================ */
+.tracemap-cluster {
+  background: transparent;
+  border: none;
+}
+.tracemap-cluster .cluster-bubble {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: #fff;
+  font-weight: 800;
+  font-family: var(--font-sans);
+  background: #000000;
+  border: 3px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+}
+/* Dominant / dense cluster gets the warm accent from the reference. */
+.tracemap-cluster .cluster-bubble.is-hot {
+  background: #F59E0B;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.5);
+}
+
+/* Soft radius/density overlay rendered with L.circle. */
+.leaflet-interactive.density-radius {
+  transition: fill-opacity 0.3s ease;
+}
+

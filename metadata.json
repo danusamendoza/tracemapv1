@@ -1,0 +1,6 @@
+{
+  "name": "TraceMap",
+  "description": "Una red social de movilidad en tiempo real que democratiza la información del transporte público a través de reportes ciudadanos verificados.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
