@@ -11,12 +11,12 @@ interface PermissionsScreenProps {
 /** Startup gate — mock permission toggles before entering the app. */
 export default function PermissionsScreen({ value, onChange, onContinue }: PermissionsScreenProps) {
   return (
-    <div className="flex flex-col flex-1 min-h-screen bg-background px-4 pt-6 pb-8">
+    <div className="flex flex-col flex-1 min-h-0 bg-background px-4 pt-6 pb-8">
       <div className="w-full max-w-sm mx-auto flex flex-col flex-1">
         <UndrawIllustration name="locationTracking" className="mb-2" />
 
         <div className="text-center mb-6">
-          <h1 className="text-lg font-extrabold text-black leading-tight">
+          <h1 className="text-lg font-bold text-black leading-tight">
             Activa tu copiloto urbano
           </h1>
           <p className="text-[11px] text-neutral-500 font-medium mt-2 leading-relaxed max-w-[16rem] mx-auto">

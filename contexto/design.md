@@ -103,8 +103,10 @@ Holgura lista Home: h-28 al final del scroll
 
 ### Flujos modales (detalle, reporte, éxito)
 
-- Headers: `glass-surface` sticky.
-- Cuerpo: **migración parcial a glass.** Conviven superficies legacy (`bg-slate-50`, `bg-white`, `rounded-xl`, inputs/forms del reporte, secciones del detalle) con CTAs negros sólidos. Migrar a `glass-card` / `bento-card` de forma incremental al tocar cada pantalla; no asumir glass en todo el flujo.
+- **Reportar incidente** y **Detalle del incidente**: bottom sheets (`BottomSheet.tsx`) que se despliegan desde abajo sobre el Home (~90% alto, `max-h-[90%]`), con backdrop `bg-black/40`, grab handle, cierre arrastrando hacia abajo (desde handle/header) o tocando el fondo.
+- **Reporte multi-paso**: un solo sheet con pasos `category` → `form` (`ReportSheet.tsx`); el Home permanece montado detrás.
+- **Éxito** (`screen === 'success'`): pantalla completa (sin cambios).
+- Contenido interno: migración parcial a glass. Conviven superficies legacy con CTAs negros sólidos.
 
 ### Pantalla `screen === 'heatmap'`
 
@@ -189,12 +191,13 @@ Archivo: `src/components/StackedIncidentCards.tsx`.
 
 | Rol | Tamaño / clase | Peso |
 |-----|----------------|------|
-| Saludo Home | `text-xl` | 800 |
-| Título card stack | `text-lg` | 800 |
-| Título card carrusel | `text-xs` | 800 |
-| Heading sección | `text-xs` uppercase tracking-wide | 700 |
+| Título principal (h1) | `text-xl` / `text-lg` | 700 (`font-bold`) |
+| Título card / incidente | `text-lg` – `text-sm` | 600 (`font-semibold`) |
+| Heading pantalla (h2) | `text-sm` uppercase tracking-wide | 600 (`font-semibold`) |
+| Heading sección (h3) | `text-base` – `text-xs` uppercase | 600 (`font-semibold`) |
+| Overline sección (h4) | `text-xs` uppercase tracking-widest | 500 (`font-medium`) |
 | Body / descripción | 11–14px | 400–500 |
-| Caption / badges | 9–10px | 500–800 |
+| Caption / badges / CTAs | 9–10px | 600–800 |
 
 ---
 

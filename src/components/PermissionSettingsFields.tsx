@@ -48,7 +48,7 @@ export default function PermissionSettingsFields({ value, onChange }: Permission
               <Icon className="w-5 h-5" weight="regular" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-extrabold text-black leading-tight">{field.label}</p>
+              <p className="text-xs font-semibold text-black leading-tight">{field.label}</p>
               <p className="text-[10px] text-neutral-500 font-medium mt-0.5 leading-snug">
                 {field.helper}
               </p>

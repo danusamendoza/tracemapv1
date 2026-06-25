@@ -154,7 +154,7 @@ export default function ZoneMonitoringCard({ incidents }: ZoneMonitoringCardProp
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0">
-          <h2 className="text-base font-extrabold text-black leading-tight">
+          <h2 className="text-base font-semibold text-black leading-tight">
             El transporte para ti
           </h2>
           <p className="text-[11px] text-neutral-500 font-medium mt-0.5 leading-snug">

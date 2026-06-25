@@ -45,7 +45,7 @@ function CardFace({ inc }: { inc: Incident }) {
         </span>
       </div>
 
-      <h4 className="font-extrabold text-black text-lg leading-tight">{inc.title}</h4>
+      <h4 className="font-semibold text-black text-lg leading-tight">{inc.title}</h4>
 
       <p className="text-[12px] text-neutral-600 mt-2 line-clamp-4 leading-relaxed flex-1">
         {inc.description}

@@ -22,7 +22,8 @@ const ITEM_H = 'h-11';
  */
 export default function FloatingNavBar({ activeTab, onTabChange }: FloatingNavBarProps) {
   return (
-    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-fit max-w-[calc(100%-2rem)] glass-card rounded-full py-1.5 px-1.5 flex items-center gap-1 shadow-[0_14px_44px_rgba(0,0,0,0.14)]">
+    <div className="app-overlay bottom-4 z-40 flex justify-center">
+      <nav className="w-fit max-w-[calc(100%-2rem)] glass-card rounded-full py-1.5 px-1.5 flex items-center gap-1 shadow-[0_14px_44px_rgba(0,0,0,0.14)]">
       {TABS.map((tab) => {
         const IconComp = tab.icon;
         const isActive = activeTab === tab.id;
@@ -47,6 +48,7 @@ export default function FloatingNavBar({ activeTab, onTabChange }: FloatingNavBa
           </button>
         );
       })}
-    </nav>
+      </nav>
+    </div>
   );
 }

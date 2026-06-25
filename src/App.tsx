@@ -52,6 +52,9 @@ import AvatarPlaceholder from './components/ui/AvatarPlaceholder';
 import UndrawIllustration from './components/ui/UndrawIllustration';
 import PermissionsScreen from './components/PermissionsScreen';
 import PermissionSettingsFields from './components/PermissionSettingsFields';
+import BottomSheet from './components/ui/BottomSheet';
+import ReportSheet from './components/ReportSheet';
+import IncidentDetailSheet from './components/IncidentDetailSheet';
 import { randomSolCoordinates } from './utils/heatmap';
 
 const CURRENT_USER_NAME = 'Elena García';
@@ -83,6 +86,8 @@ const CATEGORY_FILTERS: Array<{ label: string; value: 'todos' | IncidentCategory
 export default function App() {
   // Screen States: 'home' | 'heatmap' | 'select-category' | 'report-form' | 'success' | 'detail'
   const [screen, setScreen] = useState<'home' | 'heatmap' | 'select-category' | 'report-form' | 'success' | 'detail'>('home');
+  const [activeSheet, setActiveSheet] = useState<'report' | 'detail' | null>(null);
+  const [reportStep, setReportStep] = useState<'category' | 'form'>('category');
   // Nav Tab States: 'home' | 'rutas' | 'comunidad' | 'perfil'
   const [activeTab, setActiveTab] = useState<'home' | 'rutas' | 'comunidad' | 'perfil'>('home');
 
@@ -182,7 +187,18 @@ export default function App() {
     setReportLine('');
     setReportComment('');
     setPhotoPreview(null);
-    setScreen('select-category');
+    setReportStep('category');
+    setActiveSheet('report');
+  };
+
+  const closeReportSheet = () => {
+    setActiveSheet(null);
+    setReportStep('category');
+    setSelectedCategory(null);
+  };
+
+  const closeDetailSheet = () => {
+    setActiveSheet(null);
   };
 
   const handleSelectCategory = (category: IncidentCategory) => {
@@ -191,7 +207,7 @@ export default function App() {
 
   const proceedToForm = () => {
     if (!selectedCategory) return;
-    setScreen('report-form');
+    setReportStep('form');
   };
 
   const handleSimulatePhoto = () => {
@@ -252,6 +268,8 @@ export default function App() {
       setNewlyCreatedId(newIncident.id);
       setUserPoints(userPoints + 15); // +15 community points reward!
       setIsLoading(false);
+      setActiveSheet(null);
+      setReportStep('category');
       setScreen('success');
     }, 1200);
   };
@@ -339,7 +357,7 @@ export default function App() {
 
   const handleSelectIncident = (inc: Incident) => {
     setSelectedIncident(inc);
-    setScreen('detail');
+    setActiveSheet('detail');
   };
 
   // Glass Lista / Mapa toggle, reused in list header and over the map
@@ -374,7 +392,7 @@ export default function App() {
           <AvatarPlaceholder name={CURRENT_USER_NAME} className="w-12 h-12" size="lg" />
           <div className="min-w-0">
             <p className="text-xs text-neutral-500 font-medium leading-tight">{greeting},</p>
-            <h1 className="text-xl font-extrabold text-black leading-tight truncate">Elena García</h1>
+            <h1 className="text-xl font-bold text-black leading-tight truncate">Elena García</h1>
           </div>
         </div>
         <button 
@@ -486,7 +504,7 @@ export default function App() {
           </span>
         </div>
 
-        <h4 className="font-extrabold text-black text-sm leading-tight">
+        <h4 className="font-semibold text-black text-sm leading-tight">
           {inc.title}
         </h4>
 
@@ -559,7 +577,7 @@ export default function App() {
               <Clock className="w-2.5 h-2.5" /> {inc.timeAgo}
             </span>
           </div>
-          <h4 className="font-extrabold text-black text-xs leading-tight line-clamp-1">{inc.title}</h4>
+          <h4 className="font-semibold text-black text-xs leading-tight line-clamp-1">{inc.title}</h4>
           <p className="text-[10px] text-neutral-400 font-bold flex items-center gap-1 mt-0.5 line-clamp-1">
             <MapPin className="w-3 h-3 text-black shrink-0" /> {inc.location}
           </p>
@@ -602,7 +620,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen text-slate-800 bg-background flex flex-col max-w-md mx-auto relative border-x border-slate-200/50 shadow-2xl overflow-hidden font-sans">
+    <div className="app-shell text-slate-800 bg-background flex flex-col min-h-0 font-sans">
       
       {/* Toast Notification Overlay */}
       <AnimatePresence>
@@ -611,7 +629,7 @@ export default function App() {
             initial={{ opacity: 0, y: -50, scale: 0.95 }}
             animate={{ opacity: 1, y: 12, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-0 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm glass-surface-dark text-white text-xs px-4 py-3 rounded-2xl flex items-center gap-3"
+            className="absolute top-3 left-1/2 -translate-x-1/2 z-[1300] w-[90%] max-w-[20rem] glass-surface-dark text-white text-xs px-4 py-3 rounded-2xl flex items-center gap-3"
           >
             <div className="p-1 rounded-full bg-amber-500/10 text-amber-500">
               <TriangleAlert className="w-4 h-4" />
@@ -680,6 +698,7 @@ export default function App() {
           {/* Floating bottom stack: FAB above the incident cards, cards above the nav */}
           <div className="absolute bottom-0 inset-x-0 z-[1000] pb-24 pointer-events-none">
             {/* FAB — sits above the cards, aligned to the app's right edge */}
+            {!activeSheet && (
             <div className="px-4 flex justify-end mb-3">
               <button
                 onClick={startReporting}
@@ -689,6 +708,7 @@ export default function App() {
                 <Plus className="w-6 h-6" weight="bold" />
               </button>
             </div>
+            )}
 
             {/* Incident cards carousel */}
             {filteredIncidents.length === 0 ? (
@@ -722,7 +742,7 @@ export default function App() {
           <div className="px-4 py-3 flex justify-between items-center gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
               <BadgeAlert className="w-4.5 h-4.5 text-black shrink-0" />
-              <h3 className="font-bold text-black text-xs uppercase tracking-wide truncate">Incidencias ({filteredIncidents.length})</h3>
+              <h3 className="font-semibold text-black text-xs uppercase tracking-wide truncate">Incidencias ({filteredIncidents.length})</h3>
             </div>
             {renderHomeViewToggle()}
           </div>
@@ -736,7 +756,7 @@ export default function App() {
                 <div className="w-16 h-16 bg-neutral-100 text-black rounded-full flex items-center justify-center mb-3 border border-neutral-200/60">
                   <Train className="w-8 h-8 animate-pulse text-black" />
                 </div>
-                <h4 className="font-bold text-black text-sm mb-1">Camino despejado</h4>
+                <h4 className="font-semibold text-black text-sm mb-1">Camino despejado</h4>
                 <p className="text-xs text-neutral-400 max-w-[240px]">
                   No hay incidentes reportados en tu zona ahora mismo. ¡Excelente viaje, Elena!
                 </p>
@@ -753,8 +773,9 @@ export default function App() {
             <div className="h-28" />
           </div>
 
-          {/* FAB above the floating nav — constrained to the app's centered width */}
-          <div className="fixed inset-x-0 bottom-24 z-[1100] max-w-md mx-auto px-4 flex justify-end pointer-events-none">
+          {/* FAB above the floating nav — hidden when a sheet is open */}
+          {!activeSheet && (
+          <div className="app-overlay bottom-24 z-[1100] px-4 flex justify-end">
             <button
               onClick={startReporting}
               className="pointer-events-auto bg-black hover:bg-neutral-800 text-white px-5 py-3.5 rounded-full flex items-center gap-2 shadow-[0_12px_34px_rgba(0,0,0,0.28)] active:scale-95 hover:scale-105 transition-all cursor-pointer font-extrabold"
@@ -763,6 +784,7 @@ export default function App() {
               <span className="text-xs uppercase tracking-wider font-extrabold">Reportar incidencia</span>
             </button>
           </div>
+          )}
         </div>
       )}
 
@@ -919,7 +941,7 @@ export default function App() {
               <div className="flex justify-between items-center pb-1">
                 <div className="flex items-center gap-1.5">
                   <LayoutGrid className="w-4 h-4 text-primary" />
-                  <h3 className="font-bold text-slate-800 text-xs uppercase tracking-wide">Incidencias activas</h3>
+                  <h3 className="font-semibold text-slate-800 text-xs uppercase tracking-wide">Incidencias activas</h3>
                 </div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase">{filteredIncidents.length} resultados</span>
               </div>
@@ -928,7 +950,7 @@ export default function App() {
                   <div className="w-16 h-16 bg-neutral-100 text-black rounded-full flex items-center justify-center mb-3 border border-neutral-200/60">
                     <Train className="w-8 h-8 animate-pulse text-black" />
                   </div>
-                  <h4 className="font-bold text-slate-800 text-sm mb-1">Camino despejado</h4>
+                  <h4 className="font-semibold text-slate-800 text-sm mb-1">Camino despejado</h4>
                   <p className="text-xs text-slate-400 max-w-[240px]">
                     No hay incidentes con los filtros actuales. ¡Buen viaje, Elena!
                   </p>
@@ -939,285 +961,6 @@ export default function App() {
               <div className="h-4" />
             </div>
           )}
-        </div>
-      )}
-
-      {/* SCREEN 2: Category Selector */}
-      {screen === 'select-category' && (
-        <div className="flex flex-col flex-1 bg-white animate-in slide-in-from-right duration-250">
-          {/* Header */}
-          <header className="h-14 flex items-center px-4 justify-between sticky top-0 glass-surface border-b border-white/40 z-10">
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setScreen('home')}
-                className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors font-bold text-slate-800 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <h2 className="font-extrabold text-sm text-primary uppercase tracking-wide">Reportar incidente</h2>
-            </div>
-            <div className="w-9" />
-          </header>
-
-          <main className="flex-1 px-4 py-6 overflow-y-auto">
-            {/* Description */}
-            <div className="mb-6">
-              <h3 className="font-extrabold text-lg text-slate-900 leading-snug mb-1">¿Qué está pasando?</h3>
-              <p className="text-xs text-slate-400">
-                Selecciona la categoría que mejor describa el incidente para alertar y guiar a otros viajeros en tiempo real.
-              </p>
-            </div>
-
-            {/* Bento Categories Grid */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                {
-                  id: 'retraso',
-                  title: 'Retraso',
-                  desc: 'Demoras en la línea o estación.',
-                  icon: Clock,
-                  color: 'bg-amber-500/10 text-amber-500'
-                },
-                {
-                  id: 'congestion',
-                  title: 'Congestión',
-                  desc: 'Demasiada gente, flujo de tránsito lento.',
-                  icon: Users,
-                  color: 'bg-neutral-200/60 text-black'
-                },
-                {
-                  id: 'seguridad',
-                  title: 'Seguridad',
-                  desc: 'Asaltos, altercados o riesgos directos.',
-                  icon: ShieldCheck,
-                  color: 'bg-rose-500/10 text-rose-500'
-                },
-                {
-                  id: 'accidente',
-                  title: 'Accidente',
-                  desc: 'Colisiones, fallas de tren o percances médicos.',
-                  icon: AlertOctagon,
-                  color: 'bg-rose-500/10 text-rose-500'
-                }
-              ].map((cat) => {
-                const IconComp = cat.icon;
-                const isSelected = selectedCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleSelectCategory(cat.id as IncidentCategory)}
-                    className={`flex flex-col items-start p-4 bg-slate-50/80 rounded-xl border text-left transition-all group cursor-pointer ${
-                      isSelected 
-                        ? 'border-primary ring-2 ring-primary/10 bg-primary/5' 
-                        : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 ${cat.color}`}>
-                      <IconComp className="w-5 h-5" />
-                    </div>
-                    <span className="font-extrabold text-slate-800 text-xs uppercase tracking-wide">{cat.title}</span>
-                    <span className="text-[10px] text-slate-400 mt-1 font-medium leading-relaxed">{cat.desc}</span>
-                  </button>
-                );
-              })}
-
-              {/* Obras Full Width Option */}
-              <button
-                onClick={() => handleSelectCategory('obras')}
-                className={`col-span-2 flex items-center p-4 bg-slate-50/80 rounded-xl border text-left transition-all gap-4 group cursor-pointer ${
-                  selectedCategory === 'obras' 
-                    ? 'border-primary ring-2 ring-primary/10 bg-primary/5' 
-                    : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                <div className="w-10 h-10 rounded-full bg-slate-500/10 text-slate-500 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <Filter className="w-5 h-5" />
-                </div>
-                <div className="flex-grow">
-                  <span className="font-extrabold text-slate-800 text-xs uppercase tracking-wide">Obras y mantenimiento</span>
-                  <span className="text-[10px] text-slate-400 block font-medium leading-relaxed">Cierres de estaciones de transbordo o reparaciones anuales programadas.</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 transition-transform group-hover:translate-x-0.5" />
-              </button>
-            </div>
-
-            {/* Context location block indicator */}
-            <div className="mt-6 rounded-xl overflow-hidden relative h-36 border border-slate-200">
-              <img 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAf05t9lvmz-6upbcGItMLIUr20rwA5M-pdLN54_BPfF7uvWCNnFa2e6hOgo8s7XY7zKP2Mr0JMKalodt2vRQtEgLzWNpnEd8anod32VHdlxRqZ7J6Fu_Ldf65e70n8Zyg7SPyRVBUQwBbqOQ9GT-Mg_RJ3yzjWMSeOEXCHapHZmH7IZp1bNk7YKWHOqpkHYtVlRgqcl6V1l9fZEcbfR7-D8yXvHSFhbPZz_6BkuP26cWF8mGiC-xjor6Psd8GbaSHldDzER5X-Hj4" 
-                alt="Context transit map shadow" 
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover opacity-80"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent flex items-end p-3.5">
-                <span className="text-white text-xs font-bold flex items-center gap-1">
-                  <MapPin className="w-4 h-4 text-rose-500" /> Ubicación actual detectada (Puerta del Sol)
-                </span>
-              </div>
-            </div>
-          </main>
-
-          {/* Action Footer */}
-          <div className="p-4 border-t border-slate-100 bg-white flex gap-3 sticky bottom-0">
-            <button 
-              onClick={() => { setScreen('home'); setSelectedCategory(null); }}
-              className="flex-1 h-11 border border-primary text-primary hover:bg-primary/5 rounded-lg text-xs font-extrabold uppercase tracking-wide cursor-pointer transition-colors active:scale-95"
-            >
-              Cancelar
-            </button>
-            <button 
-              onClick={proceedToForm}
-              disabled={!selectedCategory}
-              className={`flex-grow h-11 text-white rounded-lg text-xs font-extrabold uppercase tracking-wide transition-all active:scale-95 flex items-center justify-center gap-1.5 ${
-                selectedCategory 
-                  ? 'bg-primary hover:bg-primary-container shadow-md cursor-pointer' 
-                  : 'bg-slate-300 cursor-not-allowed opacity-50'
-              }`}
-            >
-              Siguiente <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* SCREEN 3: Quick Report Form */}
-      {screen === 'report-form' && (
-        <div className="flex flex-col flex-1 bg-white animate-in slide-in-from-right duration-250">
-          {/* Header */}
-          <header className="h-14 flex items-center px-4 justify-between sticky top-0 glass-surface border-b border-white/40 z-10">
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setScreen('select-category')}
-                className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors font-bold text-slate-800 cursor-pointer"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <h2 className="font-extrabold text-sm text-primary uppercase tracking-wide">Detalles de alerta</h2>
-            </div>
-            <div className="w-9" />
-          </header>
-
-          <main className="flex-1 px-4 py-5 overflow-y-auto space-y-5">
-            <div className="p-3.5 rounded-xl bg-primary-container/10 border border-primary-container/20 flex gap-3.5 items-center">
-              <div className="w-10 h-10 rounded-full bg-primary-container text-white flex items-center justify-center flex-shrink-0">
-                {selectedCategory === 'accidente' && <AlertOctagon className="w-5 h-5" />}
-                {selectedCategory === 'seguridad' && <ShieldCheck className="w-5 h-5" />}
-                {selectedCategory === 'congestion' && <Users className="w-5 h-5" />}
-                {selectedCategory === 'retraso' && <Clock className="w-5 h-5" />}
-                {selectedCategory === 'obras' && <Filter className="w-5 h-5" />}
-              </div>
-              <div>
-                <span className="text-[9px] uppercase tracking-wider text-slate-400 block">Categoría de reporte</span>
-                <span className="text-xs font-bold text-slate-700">
-                  {selectedCategory === 'retraso' ? 'Retrasos / demoras habituales' : 
-                   selectedCategory === 'congestion' ? 'Flujo de congestión alta' :
-                   selectedCategory === 'seguridad' ? 'Problemas de seguridad ciudadana' :
-                   selectedCategory === 'accidente' ? 'Accidentes / retención en vía' : 'Obras técnicas de mantenimiento'}
-                </span>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmitReport} className="space-y-4">
-              {/* Line Input */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Línea o transporte afectado *</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="Ej: Línea 2, Autobús 150, Cercanías C3"
-                  value={reportLine}
-                  onChange={(e) => setReportLine(e.target.value)}
-                  className="w-full text-xs bg-slate-50 h-11 px-3.5 rounded-lg border border-slate-200 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/20 font-medium"
-                />
-              </div>
-
-              {/* Station Detection Indicator */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Estación / parada o tramo</label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-rose-500" />
-                  <input 
-                    type="text" 
-                    placeholder="Estación Puerta del Sol"
-                    value={reportStation}
-                    onChange={(e) => setReportStation(e.target.value)}
-                    className="w-full text-xs bg-slate-50 h-11 pl-10 pr-3.5 rounded-lg border border-slate-200 focus:outline-none font-bold text-slate-700"
-                  />
-                </div>
-                <span className="text-[9px] text-emerald-500 font-semibold block mt-1">✓ Confirmado mediante GPS del dispositivo</span>
-              </div>
-
-              {/* Comment text box */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Comentario o reporte breve *(mínimo 10 car.)</label>
-                <textarea 
-                  rows={3}
-                  required
-                  value={reportComment}
-                  onChange={(e) => setReportComment(e.target.value)}
-                  placeholder="Explica qué ocurre para ayudar a Elena u otros conmutadores con su ruta (ej: Trenes parados en túnel)..."
-                  className="w-full text-xs bg-slate-50 p-3.5 rounded-lg border border-slate-200 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/20 font-medium"
-                ></textarea>
-              </div>
-
-              {/* Visual simulated photo uploader */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Evidencia visual (comunidad)</label>
-                
-                {photoPreview ? (
-                  <div className="relative h-40 rounded-lg overflow-hidden border border-slate-200 group">
-                    <img 
-                      src={photoPreview} 
-                      alt="Upload Preview" 
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover"
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => setPhotoPreview(null)}
-                      className="absolute top-2 right-2 p-1 bg-slate-950/80 backdrop-blur-sm rounded-full text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent flex items-end p-2 px-3">
-                      <span className="text-[9px] text-white/90 font-bold block">✓ Evidencia cargada exitosamente</span>
-                    </div>
-                  </div>
-                ) : (
-                  <button 
-                    type="button"
-                    onClick={handleSimulatePhoto}
-                    className="w-full py-5 border-2 border-dashed border-slate-200 hover:border-primary rounded-lg flex flex-col items-center justify-center bg-slate-50/50 hover:bg-primary/5 transition-all cursor-pointer"
-                  >
-                    <Camera className="w-5.5 h-5.5 text-slate-400 mb-1.5" />
-                    <span className="text-xs font-bold text-slate-700 block">Fotografiar / adjuntar evidencia</span>
-                    <span className="text-[9px] text-slate-400 mt-0.5">Captura real para validación instantánea</span>
-                  </button>
-                )}
-              </div>
-            </form>
-          </main>
-
-          {/* Form Action Footer */}
-          <div className="p-4 border-t border-slate-100 bg-white flex gap-3 sticky bottom-0">
-            <button 
-              onClick={() => setScreen('select-category')}
-              className="flex-1 h-11 border border-primary text-primary hover:bg-primary/5 rounded-lg text-xs font-extrabold uppercase tracking-wide cursor-pointer transition-colors active:scale-95"
-            >
-              Atrás
-            </button>
-            <button 
-              onClick={handleSubmitReport}
-              disabled={reportLine.trim().length === 0 || reportComment.trim().length === 0}
-              className={`flex-grow h-11 text-white rounded-lg text-xs font-extrabold uppercase tracking-wide transition-all active:scale-95 flex items-center justify-center gap-1.5 ${
-                reportLine.trim() && reportComment.trim()
-                  ? 'bg-primary hover:bg-primary-container shadow-md cursor-pointer' 
-                  : 'bg-slate-300 cursor-not-allowed opacity-50'
-              }`}
-            >
-              Enviar reporte ciudadano
-            </button>
-          </div>
         </div>
       )}
 
@@ -1256,7 +999,7 @@ export default function App() {
           <main className="flex-grow flex flex-col items-center justify-center px-4 py-8 relative overflow-y-auto">
             <UndrawIllustration name="winners" className="max-w-[16rem] mb-4" style={{ maxHeight: '10rem' }} />
 
-            <h1 className="font-extrabold text-xl text-primary text-center mb-1 leading-snug">¡Gracias por ayudar!</h1>
+            <h1 className="font-bold text-xl text-primary text-center mb-1 leading-snug">¡Gracias por ayudar!</h1>
             <p className="text-xs text-slate-400 text-center max-w-[280px] mb-6">
               Tu reporte ya está alertando y orientando a otros conmutadores de la zona en tiempo real.
             </p>
@@ -1269,7 +1012,7 @@ export default function App() {
               <div className="flex-1">
                 <p className="text-[9px] uppercase tracking-wider text-slate-400 block font-bold">Indicador de impacto</p>
                 <div className="flex items-baseline gap-1.5">
-                  <h4 className="font-extrabold text-slate-800 text-xs text-on-surface">Ganaste</h4>
+                  <h4 className="font-semibold text-slate-800 text-xs text-on-surface">Ganaste</h4>
                   <span className="text-primary font-bold text-xs">+15 puntos</span>
                 </div>
                 <span className="text-[9px] text-slate-400 block font-medium">Nivel 1: Observador urbano ({userPoints} pts)</span>
@@ -1299,7 +1042,7 @@ export default function App() {
                     <Sparkles className="w-3 h-3 text-amber-500" /> 4.8 estaciones
                   </div>
                 </div>
-                <h3 className="font-extrabold text-sm text-slate-800 leading-tight">La espera es mejor con un café</h3>
+                <h3 className="font-semibold text-sm text-slate-800 leading-tight">La espera es mejor con un café</h3>
                 <p className="text-[11px] text-slate-500 mt-1">
                   Reclama un cupón de café <strong className="text-primary font-bold">2x1</strong> en la cafetería ecológica ubicada en esta misma estación.
                 </p>
@@ -1345,238 +1088,13 @@ export default function App() {
         </div>
       )}
 
-      {/* SCREEN 5: Incident Detail Community Discussion View */}
-      {screen === 'detail' && selectedIncident && (
-        <div className="flex flex-col flex-1 bg-white animate-in slide-in-from-right duration-250">
-          {/* Header */}
-          <header className="h-14 flex items-center px-4 justify-between sticky top-0 glass-surface border-b border-white/40 z-10">
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setScreen('home')}
-                className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 rounded-full transition-colors font-bold text-slate-800 cursor-pointer"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <h2 className="font-extrabold text-sm text-primary uppercase tracking-wide">Detalle del incidente</h2>
-            </div>
-            <button 
-              onClick={() => {
-                navigator.clipboard?.writeText?.(`${selectedIncident.title} en ${selectedIncident.location}`);
-                showToast("¡Link del incidente copiado al portapapeles!");
-              }}
-              className="p-2 hover:bg-slate-100 rounded-full text-slate-500 cursor-pointer active:scale-95 transition-transform"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-          </header>
-
-          <main className="flex-1 overflow-y-auto">
-            {/* Minimap Position Marker banner */}
-            <section className="relative h-44 bg-slate-100 border-b border-slate-200">
-              <img 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWdYUgAjQBF4zHqudKowXm2iymN3BPrybHylaoV-H44yPRfRA-xnRv0hu1f7vTRnOk6HvRaJh2OeAnh3LBrhkSF84G047tMhsJNyoDiVb5Ctpk2PruwWtyl_dtxpMzs3XctWzZcNyWNuS570_MipxDgZVS2OhdAiWV79UvqZiyjFvfNqRq8i7enzaXgkmCtwZX7B0ED2T7pCNdguz-Osd_htzHxAThGJ4d7MsOGedjbyUXRxV2TfJUq5m979ePBpo-u-K5f-RC0Ew"
-                alt="Mini location map"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover opacity-95"
-              />
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="relative flex h-8 w-8">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500/30 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-8 w-8 bg-rose-500/20 border border-rose-500 flex items-center justify-center">
-                    <span className="w-3.5 h-3.5 rounded-full bg-rose-600 border border-white shadow-md"></span>
-                  </span>
-                </div>
-              </div>
-              <div className="absolute bottom-3 left-3 bg-white/95 px-3 py-1 rounded-full shadow-md backdrop-blur-sm border border-slate-200/50">
-                <p className="text-[10px] text-slate-700 font-bold flex items-center gap-1 inline-block">
-                  <MapPin className="w-3.5 h-3.5 text-rose-500 inline" />
-                  {selectedIncident.location.split('(')[0].trim()}
-                </p>
-              </div>
-            </section>
-
-            {/* Incident Title Card */}
-            <section className="p-4 border-b border-slate-100 space-y-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wide text-white ${
-                      selectedIncident.status === 'critical' ? 'bg-critical' : 'bg-warning'
-                    }`}>
-                      {selectedIncident.status === 'critical' ? 'CRÍTICO' : 'RETRASO'}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-semibold">{selectedIncident.timeAgo}</span>
-                  </div>
-                  <h2 className="font-extrabold text-slate-900 text-lg leading-tight">{selectedIncident.title}</h2>
-                </div>
-                
-                <div className="p-2.5 bg-primary/5 rounded-xl border border-primary/10 text-primary">
-                  {selectedIncident.category === 'accidente' ? <AlertOctagon className="w-6 h-6 text-critical" /> :
-                   selectedIncident.category === 'seguridad' ? <ShieldCheck className="w-6 h-6 text-critical" /> :
-                   selectedIncident.category === 'congestion' ? <Users className="w-6 h-6 text-black" /> :
-                   selectedIncident.category === 'retraso' ? <Clock className="w-6 h-6 text-amber-500" /> : <Filter className="w-6 h-6 text-black" />}
-                </div>
-              </div>
-
-              {/* Verified Badge and stats */}
-              <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200/60 rounded-xl">
-                <div className="w-8 h-8 rounded-full bg-slate-300 overflow-hidden text-slate-600 flex items-center justify-center font-bold">
-                  {selectedIncident.verified ? <ShieldCheck className="w-5 h-5 text-black" /> : <User className="w-5 h-5" />}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-1">
-                    <p className="font-extrabold text-[11px] text-slate-800">
-                      {selectedIncident.verified ? 'Servicio de tránsito oficial' : 'Informante verificado'}
-                    </p>
-                    <span className="text-black"><CheckCircle className="w-3.5 h-3.5 fill-black text-white" /></span>
-                  </div>
-                  <p className="text-[9px] text-slate-400 font-medium">Nivel 4 · Experto en rutas metropolitanas</p>
-                </div>
-              </div>
-
-              {/* Description comment */}
-              <div className="space-y-1">
-                <p className="text-xs text-slate-600 font-medium leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-200/40">
-                  {selectedIncident.description}
-                </p>
-              </div>
-            </section>
-
-            {/* Validation feedback block: ¿Sigue ocurriendo? */}
-            <section className="p-4 bg-slate-50/50 border-b border-slate-100 space-y-3.5">
-              <h3 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider text-center">¿Sigue transcurriendo?</h3>
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => handleVote(selectedIncident.id, 'up')}
-                  className={`flex-1 p-3.5 rounded-xl border-2 hover:bg-primary/5 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                    selectedIncident.voted === 'up' 
-                      ? 'border-primary bg-primary/5 text-primary' 
-                      : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                  }`}
-                >
-                  <ThumbsUp className={`w-5.5 h-5.5 ${selectedIncident.voted === 'up' ? 'fill-primary/15' : ''}`} />
-                  <span className="text-2xs font-extrabold uppercase tracking-wider">Sí, sigue igual</span>
-                </button>
-
-                <button 
-                  onClick={() => handleVote(selectedIncident.id, 'down')}
-                  className={`flex-1 p-3.5 rounded-xl border-2 hover:bg-rose-50/50 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                    selectedIncident.voted === 'down' 
-                      ? 'border-rose-500 bg-rose-50 text-rose-600' 
-                      : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                  }`}
-                >
-                  <ThumbsDown className="w-5.5 h-5.5" />
-                  <span className="text-2xs font-extrabold uppercase tracking-wider text-secondary">No, ya se despejó</span>
-                </button>
-              </div>
-
-              {/* Impact score footer details */}
-              <div className="flex items-center justify-center gap-2 bg-slate-200/50 py-2 rounded-full">
-                <div className="flex -space-x-1.5">
-                  <div className="w-5.5 h-5.5 rounded-full border border-white bg-neutral-200 flex items-center justify-center text-[8px] font-bold">JD</div>
-                  <div className="w-5.5 h-5.5 rounded-full border border-white bg-green-100 flex items-center justify-center text-[8px] font-bold">AL</div>
-                  <div className="w-5.5 h-5.5 rounded-full border border-white bg-purple-100 flex items-center justify-center text-[8px] font-bold">MS</div>
-                </div>
-                <p className="text-[10px] text-slate-500 font-bold">
-                  <strong className="text-slate-800">{selectedIncident.votes} personas</strong> validaron este reporte en tránsito
-                </p>
-              </div>
-            </section>
-
-            {/* Live Comments Feed Section */}
-            <section className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-extrabold text-slate-950 text-xs uppercase tracking-wider">Comentarios recientes ({selectedIncident.comments.length})</h3>
-                <span className="text-[10px] text-primary font-bold">Comunidad activa</span>
-              </div>
-
-              <div className="space-y-3.5">
-                {selectedIncident.comments.length === 0 ? (
-                  <p className="text-[11px] text-slate-400 italic text-center py-4">No hay comentarios en este reporte todavía. Sé el primero en opinar.</p>
-                ) : (
-                  selectedIncident.comments.map((comm) => (
-                    <div key={comm.id} className="flex gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
-                        {comm.user.charAt(0)}
-                      </div>
-                      <div className="bg-slate-50 p-3 rounded-xl rounded-tl-none border border-slate-200/60 flex-1">
-                        <div className="flex items-baseline justify-between mb-1">
-                          <p className="text-2xs font-extrabold text-slate-700">
-                            {comm.user} <span className="text-slate-400 font-normal"> · {comm.level || 'Viajero'}</span>
-                          </p>
-                          <span className="text-[9px] text-slate-400">{comm.timeAgo}</span>
-                        </div>
-                        <p className="text-xs text-slate-600 font-medium leading-relaxed">{comm.text}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {/* Form Input comment */}
-              <form onSubmit={handleAddComment} className="mt-4 flex items-center gap-2 bg-slate-100 rounded-full px-3.5 py-1.5 focus-within:ring-2 focus-within:ring-primary/10">
-                <input 
-                  type="text" 
-                  value={commentInput}
-                  onChange={(e) => setCommentInput(e.target.value)}
-                  placeholder="Añadir actualización o comentar..."
-                  className="bg-transparent border-none focus:outline-none focus:ring-0 text-xs flex-1 text-slate-800 placeholder-slate-400 py-1 font-medium"
-                />
-                <button 
-                  type="submit" 
-                  disabled={!commentInput.trim()}
-                  className={`p-1.5 rounded-full ${
-                    commentInput.trim() ? 'bg-primary text-white cursor-pointer' : 'text-slate-300'
-                  }`}
-                >
-                  <Send className="w-3.5 h-3.5" />
-                </button>
-              </form>
-            </section>
-
-            {/* Detail Sheet primary operations */}
-            <div className="p-4 space-y-3.5">
-              <button 
-                onClick={() => handleToggleSubscribe(selectedIncident.id)}
-                className={`w-full h-11 rounded-lg text-xs font-extrabold uppercase tracking-wide flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer ${
-                  subscribedAlerts.includes(selectedIncident.id)
-                    ? 'bg-slate-100 border border-slate-300 text-slate-500'
-                    : 'bg-primary text-white hover:bg-primary-container'
-                }`}
-              >
-                {subscribedAlerts.includes(selectedIncident.id) ? (
-                  <>
-                    <BellOff className="w-4 h-4 text-slate-400" /> Dejar de seguir alerta
-                  </>
-                ) : (
-                  <>
-                    <Bell className="w-4 h-4 text-white" /> Seguir esta alerta en tiempo real
-                  </>
-                )}
-              </button>
-
-              <button 
-                onClick={() => setScreen('home')}
-                className="w-full h-11 border border-primary text-primary hover:bg-primary/5 rounded-lg text-xs font-extrabold uppercase tracking-wide cursor-pointer transition-colors active:scale-95 shadow-2xs"
-              >
-                Volver al inicio
-              </button>
-            </div>
-            
-            <div className="h-8" />
-          </main>
-        </div>
-      )}
-
-
       {/* OTHER TABS RENDER */}
 
       {/* TAB 2: Mis Rutas view */}
       {activeTab === 'rutas' && screen === 'home' && (
         <div className="flex flex-col flex-grow bg-background animate-in fade-in duration-200">
           <header className="h-14 flex items-center px-4 justify-between sticky top-0 glass-surface border-b border-white/40 z-10">
-            <h2 className="font-extrabold text-sm text-primary uppercase tracking-wide">Mis trayectos</h2>
+            <h2 className="font-semibold text-sm text-primary uppercase tracking-wide">Mis trayectos</h2>
             <button 
               onClick={() => showToast("Trayecto rápido configurado. Recibirás alertas antes de iniciar.")}
               className="p-1.5 px-3 bg-primary/5 text-primary hover:bg-primary/10 rounded-full text-xs font-bold transition-all active:scale-95 cursor-pointer"
@@ -1588,7 +1106,7 @@ export default function App() {
           <main className="p-4 pb-28 flex-1 overflow-y-auto space-y-5">
             {/* Elena Route Intro */}
             <div className="space-y-1">
-              <h3 className="font-extrabold text-base text-slate-950">Trayectos diarios de Elena</h3>
+              <h3 className="font-semibold text-base text-slate-950">Trayectos diarios de Elena</h3>
               <p className="text-xs text-slate-400">Administra tus recorridos regulares para recibir avisos automáticos y optimizar tu tiempo de traslado.</p>
             </div>
 
@@ -1639,7 +1157,7 @@ export default function App() {
                   </div>
                   <div className="flex-1 space-y-1">
                     <div className="flex justify-between items-baseline">
-                      <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wide">{route.name}</h4>
+                      <h4 className="font-semibold text-xs text-slate-800 uppercase tracking-wide">{route.name}</h4>
                       <span className="text-[10px] font-bold text-slate-400">{route.time}</span>
                     </div>
                     <p className="text-2xs text-slate-400 font-bold block">
@@ -1660,7 +1178,7 @@ export default function App() {
 
             {/* Smart Commute Alert Configuration Banner */}
             <div className="p-4 rounded-xl bg-primary-container/10 border border-primary-container/20 space-y-2">
-              <h4 className="font-extrabold text-xs text-primary uppercase tracking-wider flex items-center gap-1">
+              <h4 className="font-semibold text-xs text-primary uppercase tracking-wider flex items-center gap-1">
                 <Sparkles className="w-4 h-4 text-amber-400 fill-amber-400" /> Torre de control inteligente
               </h4>
               <p className="text-2xs text-slate-500 leading-relaxed font-semibold">
@@ -1675,19 +1193,19 @@ export default function App() {
       {activeTab === 'comunidad' && screen === 'home' && (
         <div className="flex flex-col flex-grow bg-background animate-in fade-in duration-200">
           <header className="h-14 flex items-center px-4 justify-between sticky top-0 glass-surface border-b border-white/40 z-10">
-            <h2 className="font-extrabold text-sm text-primary uppercase tracking-wide">Comunidad social</h2>
+            <h2 className="font-semibold text-sm text-primary uppercase tracking-wide">Comunidad social</h2>
             <span className="text-[10px] text-slate-400 font-bold uppercase">TraceMap activo</span>
           </header>
 
           <main className="p-4 pb-28 flex-1 overflow-y-auto space-y-6">
             <div className="space-y-1">
-              <h3 className="font-extrabold text-base text-slate-950">Movilidad social colaborativa</h3>
+              <h3 className="font-semibold text-base text-slate-950">Movilidad social colaborativa</h3>
               <p className="text-xs text-slate-400 font-semibold text-slate-500">Democratizando las vías de transporte público con información de primera mano.</p>
             </div>
 
             {/* Leaderboard list of citizens with levels */}
             <section className="space-y-3.5">
-              <h4 className="font-bold text-xs text-slate-400 uppercase tracking-widest block">Líderes de impacto de la semana</h4>
+              <h4 className="font-medium text-xs text-slate-400 uppercase tracking-widest block">Líderes de impacto de la semana</h4>
               
               <div className="space-y-2">
                 {[
@@ -1720,7 +1238,7 @@ export default function App() {
 
             {/* Recent Global discussion feed */}
             <section className="space-y-3">
-              <h4 className="font-bold text-xs text-slate-400 uppercase tracking-widest block">Discusión comunitaria de Madrid</h4>
+              <h4 className="font-medium text-xs text-slate-400 uppercase tracking-widest block">Discusión comunitaria de Madrid</h4>
               
               <div className="space-y-3">
                 {[
@@ -1758,7 +1276,7 @@ export default function App() {
       {activeTab === 'perfil' && screen === 'home' && (
         <div className="flex flex-col flex-grow bg-background animate-in fade-in duration-200">
           <header className="h-14 flex items-center px-4 justify-between sticky top-0 glass-surface border-b border-white/40 z-10">
-            <h2 className="font-extrabold text-sm text-primary uppercase tracking-wide">Mi perfil</h2>
+            <h2 className="font-semibold text-sm text-primary uppercase tracking-wide">Mi perfil</h2>
             <span className="text-[10px] text-slate-400 font-bold uppercase">Elena G.</span>
           </header>
 
@@ -1772,7 +1290,7 @@ export default function App() {
                 variant="onDark"
               />
               <div className="flex items-center gap-1">
-                <h3 className="font-extrabold text-base">Elena García</h3>
+                <h3 className="font-semibold text-base">Elena García</h3>
                 <span className="text-white"><ShieldCheck className="w-4.5 h-4.5 text-amber-300 fill-amber-300/20" /></span>
               </div>
               <p className="text-[10px] text-neutral-300 font-bold uppercase tracking-wide">Nivel 1: Observador urbano activo</p>
@@ -1803,7 +1321,7 @@ export default function App() {
 
             {/* Permissions & notifications — editable mock toggles */}
             <section className="space-y-3">
-              <h4 className="font-bold text-xs text-slate-400 uppercase tracking-widest block">
+              <h4 className="font-medium text-xs text-slate-400 uppercase tracking-widest block">
                 Permisos y notificaciones
               </h4>
               <div className="p-4 bento-card glass-card">
@@ -1819,7 +1337,7 @@ export default function App() {
 
             {/* Achievement badges */}
             <section className="space-y-3">
-              <h4 className="font-bold text-xs text-slate-400 uppercase tracking-widest block">Insignias obtenidas</h4>
+              <h4 className="font-medium text-xs text-slate-400 uppercase tracking-widest block">Insignias obtenidas</h4>
               
               <div className="space-y-2">
                 {[
@@ -1836,7 +1354,7 @@ export default function App() {
                       <Trophy className="w-4.5 h-4.5" />
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wide">{bg.title}</h4>
+                      <h4 className="font-semibold text-xs text-slate-800 uppercase tracking-wide">{bg.title}</h4>
                       <p className="text-[10px] text-slate-400 leading-tight font-medium">{bg.desc}</p>
                     </div>
                   </div>
@@ -1847,9 +1365,55 @@ export default function App() {
         </div>
       )}
 
+      {/* Bottom sheets — report flow & incident detail */}
+      <BottomSheet open={activeSheet === 'report'} onClose={closeReportSheet}>
+        <ReportSheet
+          step={reportStep}
+          selectedCategory={selectedCategory}
+          reportLine={reportLine}
+          reportStation={reportStation}
+          reportComment={reportComment}
+          photoPreview={photoPreview}
+          onSelectCategory={handleSelectCategory}
+          onReportLineChange={setReportLine}
+          onReportStationChange={setReportStation}
+          onReportCommentChange={setReportComment}
+          onPhotoPreviewClear={() => setPhotoPreview(null)}
+          onSimulatePhoto={handleSimulatePhoto}
+          onCancel={closeReportSheet}
+          onProceedToForm={proceedToForm}
+          onBackToCategory={() => setReportStep('category')}
+          onSubmit={handleSubmitReport}
+          onClose={closeReportSheet}
+        />
+      </BottomSheet>
+
+      <BottomSheet
+        open={activeSheet === 'detail' && !!selectedIncident}
+        onClose={closeDetailSheet}
+      >
+        {selectedIncident && (
+          <IncidentDetailSheet
+            incident={selectedIncident}
+            commentInput={commentInput}
+            subscribedAlerts={subscribedAlerts}
+            onCommentInputChange={setCommentInput}
+            onAddComment={handleAddComment}
+            onVote={handleVote}
+            onToggleSubscribe={handleToggleSubscribe}
+            onShare={() => {
+              navigator.clipboard?.writeText?.(
+                `${selectedIncident.title} en ${selectedIncident.location}`,
+              );
+              showToast('¡Link del incidente copiado al portapapeles!');
+            }}
+            onClose={closeDetailSheet}
+          />
+        )}
+      </BottomSheet>
 
       {/* Floating glass navigation bar (hovers over content / map) */}
-      {screen === 'home' && (
+      {screen === 'home' && !activeSheet && (
         <FloatingNavBar
           activeTab={activeTab}
           onTabChange={(tab) => {
